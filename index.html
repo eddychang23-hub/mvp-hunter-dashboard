@@ -1,0 +1,387 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>MVP Hunter</title>
+<style>
+:root{color-scheme:dark;--ink:#f3ecda;--muted:#acb5b2;--gold:#f4bd70;--teal:#82d9c5;--line:#344444;--panel:#172625}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% 0%,#263932,#101a1c 48%);color:var(--ink);font:15px system-ui,sans-serif}
+main{max-width:1050px;margin:auto;padding:clamp(18px,5vw,56px)}header{border-bottom:1px solid var(--line);padding-bottom:25px;margin-bottom:24px}
+h1,h2,h3{font-family:Georgia,serif;margin:0;font-weight:500}h1{font-size:clamp(46px,9vw,88px);letter-spacing:-.055em;line-height:1}
+h2{font-size:30px}h3{font-size:23px}.eyebrow{color:var(--gold);letter-spacing:.13em;text-transform:uppercase;font-size:11px;font-weight:750}
+.toolbar,.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.toolbar{flex-wrap:wrap;margin-bottom:18px}
+select{max-width:100%;font:inherit;padding:10px 14px;background:#182b29;color:var(--ink);border:1px solid #58716b;border-radius:8px}
+select:focus-visible{outline:2px solid var(--gold)}.muted,small{color:var(--muted)}small{display:block;margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:22px}.stats div,.panel{border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:clamp(12px,3vw,23px)}
+.stats strong{display:block;color:var(--gold);font:clamp(27px,6vw,48px) Georgia,serif;margin-bottom:5px}.stats span{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.panel{min-width:0}.wide{grid-column:1/-1}.row{padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.row b{color:var(--teal);white-space:nowrap;font-variant-numeric:tabular-nums}
+details{margin-top:12px}summary{cursor:pointer;color:var(--teal)}.bar{height:7px;border-radius:6px;background:#233c3a;margin:5px 0 10px}.bar i{display:block;height:100%;background:var(--teal);border-radius:6px}
+#status{min-height:1.3em}@media(max-width:590px){.grid{grid-template-columns:1fr}main{padding-top:30px}}
+.tabs{display:flex;gap:10px;margin-bottom:18px}button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 15px;cursor:pointer}button[aria-pressed=true]{color:#10201d;background:var(--teal)}
+.loot-table{width:100%;border-collapse:collapse;font-size:14px}.loot-table th,.loot-table td{border-bottom:1px solid var(--line);padding:10px 4px;text-align:right}.loot-table th:first-child,.loot-table td:first-child{text-align:left}.price{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}.price input{width:5.6em;min-width:0;background:#101a1c;color:var(--ink);border:1px solid #58716b;border-radius:5px;padding:6px;font:inherit;text-align:right}.loot-table output{white-space:nowrap}
+@media(max-width:420px){.loot-table{font-size:12px}.price input{width:4em;padding:5px 2px}}
+.wave-summary{margin-bottom:24px}.wave-summary .eyebrow{margin:0 0 6px}.wave-summary .toolbar{margin-bottom:14px}.wave-summary .stats{margin-bottom:12px}.wave-summary .stats div{padding:12px 16px;background:#12211f}.wave-summary .stats strong{font-size:32px;margin-bottom:2px}.wave-details{align-items:start;gap:10px}.wave-details>details{margin:0;padding:12px 14px}.wave-details>details>summary{font-weight:600;font-size:14px}.wave-details>details>summary span{font-weight:400;font-size:12px}.wave-details>details[open]>summary{margin-bottom:8px}.wave-details>details[open]>summary span{display:none}.wave-details .row{padding:6px 0;font-size:13px}.wave-details small{font-size:11px;margin-top:2px}summary:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:4px}.wave-summary select{font-size:13px;padding:8px 10px}
+@media(max-width:590px){.wave-summary .toolbar{align-items:flex-start;flex-direction:column}.wave-summary select{width:100%}.wave-summary .stats div{padding:10px}.wave-summary .stats strong{font-size:28px}}
+.totals-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}.totals-table th,.totals-table td{padding:10px 4px;border-bottom:1px solid var(--line);text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.totals-table th:first-child{text-align:left;width:50%;font-weight:400}.totals-table thead th{color:var(--muted);font-size:12px}.totals-table td{color:var(--teal);font-weight:650}.totals-table tbody tr.tail>*{border-bottom:0}.period-note{font-size:12px;line-height:1.6;margin:0 0 10px}.totals-panel>details{border-top:1px solid var(--line);padding-top:12px}.totals-panel>details>summary{font-size:13px}
+details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-group:last-child{border-bottom:0}details.zeny-group>summary{list-style:none;color:var(--ink)}details.zeny-group>summary::-webkit-details-marker{display:none}details.zeny-group>summary.row{border-bottom:0}details.zeny-group[open]>summary.row{border-bottom:1px solid #263837}
+.zeny-caret{display:inline-block;margin-right:6px;color:var(--teal);transition:transform .15s ease;font-size:.85em}details.zeny-group[open] .zeny-caret,.row-toggle[aria-expanded=true] .zeny-caret{transform:rotate(90deg)}details.zeny-group>summary:hover .zeny-title,.row-toggle:hover .zeny-title{color:var(--teal)}
+.zeny-list{padding:2px 0 6px 14px;margin:2px 0 4px 6px;border-left:2px solid var(--line)}.zeny-list .row{padding:5px 0;font-size:13px}.zeny-list .row b{color:var(--ink);font-weight:600}
+.zeny-box{border:1px solid var(--line);background:#12211f;border-radius:10px;padding:10px 14px;margin:0 0 16px}.zeny-box details.zeny-group>summary.row{padding:0}.zeny-box details.zeny-group[open]>summary.row{padding-bottom:8px;margin-bottom:4px}.zeny-box p{margin:0}
+.row-toggle{background:none;border:0;border-radius:0;padding:0;margin:0;width:100%;display:flex;align-items:flex-start;gap:2px;text-align:left;color:inherit;font:inherit;cursor:pointer}.row-toggle:focus-visible{outline-offset:2px}.row-toggle .zeny-caret{margin-top:2px;flex-shrink:0}.row-toggle small{font-size:11px;margin-top:2px}.totals-table tr.expandable{cursor:pointer}.totals-table tr.subrow th{padding-left:20px;color:var(--muted);font-size:13px}.totals-table tr.subrow td{color:var(--ink);font-weight:500;font-size:13px}
+</style>
+<main><header><p class="eyebrow">Ragnarok M · AkaZaa</p><h1>MVP Hunter</h1><p class="muted" id="status" role="status">Loading hunt history…</p></header>
+<section id="dashboard" hidden>
+<nav class="tabs" aria-label="Dashboard views"><button id="huntTab" aria-pressed="true">Hunt</button><button id="lootTab" aria-pressed="false">Loot</button></nav>
+<div id="huntView">
+<section class="panel wave-summary" aria-labelledby="waveHeading">
+<div class="toolbar"><div><p class="eyebrow" id="waveLabel">Latest completed wave</p><h2 id="waveHeading">Wave summary</h2><small id="waveTitle"></small></div><select id="wave" aria-label="Select a wave"></select></div>
+<div class="stats" id="stats"></div><div class="grid wave-details">
+<details class="panel"><summary>Loot haul <span class="muted">· expand details</span></summary><div id="loot"></div></details>
+<details class="panel"><summary>MVP results <span class="muted">· expand details</span></summary><div id="kills"></div></details>
+</div></section>
+<div class="toolbar"><h2>Hunt totals</h2><select id="day" aria-label="Select a hunt date"></select></div>
+<section class="panel totals-panel" aria-label="Daily and weekly hunt totals">
+<p id="periodDates" class="muted period-note"></p>
+<table class="totals-table"><thead><tr><th scope="col">Metric</th><th scope="col">Daily</th><th scope="col">Weekly</th></tr></thead><tbody id="periodTotals"></tbody></table>
+<details><summary>Loot by item · daily / weekly</summary><table class="totals-table"><thead><tr><th scope="col">Item</th><th scope="col">Daily</th><th scope="col">Weekly</th></tr></thead><tbody id="periodLoot"></tbody></table></details>
+</section>
+<div class="grid" style="margin-top:16px">
+<section class="panel wide"><div class="toolbar"><h3>Hunt history</h3><select id="filter" aria-label="History wave type"><option value="all">All waves</option><option value="apoc">Apocalypse</option><option value="regular">Regular</option></select></div><div id="history"></div><details><summary>Loot totals by item and boss</summary><div id="lootHistory"></div></details><details><summary>Most-killed MVPs and top rivals</summary><div id="rankings"></div></details></section>
+</div></div>
+<section id="lootView" class="panel" hidden><div class="toolbar"><h2>Loot</h2><strong id="grandValue"></strong></div>
+<div class="toolbar">
+<select id="lootPeriod" aria-label="Loot period"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option><option value="all">All time</option></select>
+<input type="date" id="lootDate" aria-label="Loot date">
+<select id="lootOrder" aria-label="Loot view"><option value="name">By name</option><option value="recent">Recent drops</option><option value="oldest">Oldest first</option></select>
+</div>
+<div id="rawZeny" class="zeny-box"></div>
+<div id="lootTimeline" hidden></div>
+<div id="lootByName">
+<p class="muted">Enter a price per item in thousands. Type 500 for $500K.</p>
+<p id="priceStatus" class="muted" role="status"></p>
+<table class="loot-table"><thead><tr><th scope="col">Item</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Total</th></tr></thead><tbody id="lootTable"></tbody></table></div></section>
+</section></main>
+<script>
+const byId = id => document.getElementById(id);
+const make = (tag,text,cls) => {const el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;return el};
+const row = (name,value,note) => {const el=make('div','','row'), label=make('span',name);if(note)label.append(make('small',note));el.append(label,make('b',value));return el};
+const apoc = w => /T(12|22):00$/.test(w.wave);
+const stamp = w => w.wave.replace('T',' · ');
+const minerals = new Set(['Elunium','Oridecon','Shining Holy Water','Time Twister',"Snake Demon's Pupils"]);
+const watchlist = ["Elunium","Oridecon","Nile's Bracelet","Eye of Dullahan","Orleans's Gloves","Shining Holy Water","Static Shield","Goibne's Armor","Matyr's Leash","Lance of Dragon Tamer","Holy Avenger","Slash","Stone Buckler","Time Twister","Orleans's Gown","Imperial Guard","Crystal Pumps","Fire Ninja Shinobi's Belt","Snake Demon's Pupils","Hollgrehenn's Refined Hammer"];
+const priceStorage = 'mvp-hunter-prices';
+const offline = true;
+const formatK = value => '$'+value.toLocaleString('en-US',{maximumFractionDigits:3})+'K';
+let prices = {};
+let waves = [];
+let lootWaves = [];
+let pendingSaves = Promise.resolve();
+const lootRows = new Map();
+const number = value => value.toLocaleString('en-US');
+const rawZeny = 'Raw Zeny';
+const isConfirmedLoot = ([name,boss]) => name!==rawZeny||boss!=='source unknown';
+const add = (map,key,n=1) => map.set(key,(map.get(key)||0)+n);
+const plural = (n,word) => number(n)+' '+word+(n===1?'':'s');
+const shareText = (part,total) => {if(!total)return '';const pct=100*part/total;return (pct>=1?Math.round(pct):pct.toFixed(1))+'%'};
+const bossName = boss => boss==='source unknown'?'Unattributed':boss;
+const formatCell = v => typeof v==='number'?number(v):v;
+const tableRow = (label,day,week) => {const tr=make('tr',''),th=make('th',label);th.scope='row';tr.append(th,make('td',formatCell(day)),make('td',formatCell(week)));return tr};
+const openZeny = new Set();
+function zenyRow(key,title,totalText,note,entries){
+  const details=make('details','','zeny-group');
+  if(openZeny.has(key))details.open=true;
+  const summary=make('summary','','row');
+  const label=make('span','');
+  const caret=make('span','▸','zeny-caret');
+  caret.setAttribute('aria-hidden','true');
+  label.append(caret,make('span',title,'zeny-title'));
+  if(note)label.append(make('small',note));
+  summary.append(label,make('b',totalText));
+  const list=make('div','','zeny-list');
+  for(const [boss,amount,detailNote] of entries)list.append(row(boss,number(amount),detailNote));
+  details.append(summary,list);
+  details.addEventListener('toggle',()=>{if(details.open)openZeny.add(key);else openZeny.delete(key)});
+  return details;
+}
+function updateTableTail(tbody){
+  let last=null;
+  for(const tr of tbody.children){tr.classList.remove('tail');if(!tr.hidden)last=tr}
+  if(last)last.classList.add('tail');
+}
+function appendZenyTableRows(tbody,key,label,dayVal,weekVal,subrows){
+  if(!subrows.length){tbody.append(tableRow(label,dayVal,weekVal));return}
+  const expanded=openZeny.has(key);
+  const tr=make('tr','','expandable');
+  const th=make('th','');th.scope='row';
+  const btn=make('button','','row-toggle');btn.type='button';btn.setAttribute('aria-expanded',String(expanded));
+  const caret=make('span','▸','zeny-caret');caret.setAttribute('aria-hidden','true');
+  const text=make('span','');
+  text.append(make('span',label,'zeny-title'),make('small',plural(subrows.length,'MVP')+' · click for details'));
+  btn.append(caret,text);th.append(btn);
+  tr.append(th,make('td',formatCell(dayVal)),make('td',formatCell(weekVal)));
+  tbody.append(tr);
+  const children=subrows.map(([boss,dVal,wVal])=>{const sub=tableRow(boss,dVal,wVal);sub.className='subrow';sub.hidden=!expanded;tbody.append(sub);return sub});
+  tr.addEventListener('click',()=>{
+    const next=btn.getAttribute('aria-expanded')!=='true';
+    btn.setAttribute('aria-expanded',String(next));
+    if(next)openZeny.add(key);else openZeny.delete(key);
+    for(const sub of children)sub.hidden=!next;
+    updateTableTail(tbody);
+  });
+}
+byId('lootDate').value = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Guatemala',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+function lootEvents(){
+  const date=byId('lootDate').value;
+  const period=byId('lootPeriod').value;
+  let start=date, end=date;
+  if(period==='week'&&date){
+    const monday=new Date(date+'T00:00:00Z');
+    monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
+    start=monday.toISOString().slice(0,10);
+    monday.setUTCDate(monday.getUTCDate()+6);
+    end=monday.toISOString().slice(0,10);
+  }
+  return lootWaves.flatMap(w=>w.pickups?.length?w.pickups:w.loot.map(
+    ([name,boss,qty])=>[name,boss,qty,w.wave.replace('T',' '),1,true]
+  )).filter(isConfirmedLoot).filter(([,,,timestamp])=>{
+    const day=timestamp.slice(0,10);
+    if(period==='all')return true;
+    if(period==='month')return day.slice(0,7)===date.slice(0,7);
+    return day>=start&&day<=end;
+  });
+}
+function updateValues(events=lootEvents()){
+  const counts=new Map(), zeny=new Map(), zenyPickups=new Map();
+  let totalPickups=0;
+  for(const [name,boss,qty,,count] of events){
+    add(counts,name,qty*count);
+    if(name===rawZeny){
+      const source=bossName(boss);
+      add(zeny,source,qty*count);
+      add(zenyPickups,source,count);
+      totalPickups+=count;
+    }
+  }
+  let total=0;
+  for(const [name,{qty,value,input}] of lootRows){
+    const count=counts.get(name)||0;
+    qty.textContent=count.toLocaleString('en-US');
+    const unit=input.valueAsNumber;
+    const subtotal=count*unit;
+    value.textContent=Number.isFinite(subtotal)&&unit>=0?formatK(subtotal):'—';
+    if(Number.isFinite(subtotal)&&unit>=0)total+=subtotal;
+  }
+  byId('grandValue').textContent='Priced loot · '+formatK(total);
+  const rawZenyTotal=counts.get(rawZeny)||0;
+  const entries=[...zeny]
+    .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+    .map(([boss,amount])=>{
+      const pickups=zenyPickups.get(boss);
+      const note=[plural(pickups,'pickup'),pickups>1?'avg '+number(Math.round(amount/pickups)):'',shareText(amount,rawZenyTotal)].filter(Boolean).join(' · ');
+      return [boss,amount,note];
+    });
+  byId('rawZeny').replaceChildren(
+    entries.length
+      ?zenyRow('rawZeny','MVP Zeny collected',number(rawZenyTotal),plural(entries.length,'MVP')+' · '+plural(totalPickups,'pickup')+' · click for details',entries)
+      :make('p','No confirmed MVP Zeny pickups for this period.','muted')
+  );
+}
+function renderLoot(){
+  const order=byId('lootOrder').value;
+  const timeline=byId('lootTimeline');
+  byId('lootDate').disabled=byId('lootPeriod').value==='all';
+  byId('lootByName').hidden=order!=='name';
+  timeline.hidden=order==='name';
+  const events=lootEvents();
+  updateValues(events);
+  if(timeline.hidden)return;
+  events.sort((a,b)=>(order==='recent'?-1:1)*a[3].localeCompare(b[3]));
+  const fragment=document.createDocumentFragment();
+  for(const [name,boss,qty,time,count,summary] of events){
+    const source=boss==='source unknown'?'':' · '+boss;
+    const note=time.slice(0,19)+(summary?' · wave total':'')+source;
+    fragment.append(row(name,'×'+number(qty*count),note));
+  }
+  if(!events.length)fragment.append(make('p','No recorded pickups for this period.','muted'));
+  timeline.replaceChildren(fragment);
+}
+for(const id of ['lootPeriod','lootDate','lootOrder'])byId(id).addEventListener('change',renderLoot);
+function savePrice(name,input){
+  if(!input.validity.valid){
+    byId('priceStatus').textContent='Enter a price from 0 to 1,000,000K, with up to three decimals.';
+    return;
+  }
+  const price=input.value===''?null:input.valueAsNumber;
+  byId('priceStatus').textContent='Saving…';
+  pendingSaves=pendingSaves.then(async()=>{
+    try{
+      if(offline){
+        if(price===null)delete prices[name];else prices[name]=price;
+        localStorage.setItem(priceStorage,JSON.stringify(prices));
+      }else{
+        const response=await fetch('/api/prices',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price})});
+        if(!response.ok)throw Error('save');
+      }
+      byId('priceStatus').textContent=offline?'Saved in this browser.':'Saved to your private dashboard.';
+    }catch{byId('priceStatus').textContent='Price could not be saved. Edit the field to retry.'}
+  });
+}
+async function loadPrices(){
+  try{
+    if(offline)prices=JSON.parse(localStorage.getItem(priceStorage)||'{}');
+    else{
+      const response=await fetch('/api/prices',{cache:'no-store'});
+      if(!response.ok)throw Error('prices');
+      prices=await response.json();
+    }
+  }catch{byId('priceStatus').textContent='Saved prices could not be loaded.'}
+  for(const name of [...watchlist].sort((a,b)=>a.localeCompare(b))){
+    const tr=document.createElement('tr');
+    const title=make('th',name);title.scope='row';
+    const qty=make('td','0'),priceCell=make('td',''),valueCell=make('td',''),value=make('output','—');
+    const input=make('input','');input.type='number';input.inputMode='decimal';input.min='0';input.max='1000000';input.step='0.001';
+    input.value=prices[name]??'';input.setAttribute('aria-label',name+' price in thousands');
+    input.addEventListener('input',()=>updateValues());
+    input.addEventListener('change',()=>savePrice(name,input));
+    const price=make('label','','price');price.append(make('span','$'),input,make('span','K'));
+    priceCell.append(price);valueCell.append(value);tr.append(title,qty,priceCell,valueCell);byId('lootTable').append(tr);
+    lootRows.set(name,{qty,value,input});
+  }
+  updateValues();
+}
+function showLoot(show){
+  byId('huntView').hidden=show;byId('lootView').hidden=!show;
+  byId('huntTab').setAttribute('aria-pressed',String(!show));byId('lootTab').setAttribute('aria-pressed',String(show));
+}
+byId('huntTab').addEventListener('click',()=>showLoot(false));
+byId('lootTab').addEventListener('click',()=>showLoot(true));
+loadPrices();
+const sumLoot = w => w.loot.reduce((total,[name,,qty])=>total+(name===rawZeny?0:qty),0);
+function periodView(){
+  const date=byId('day').value;
+  const monday=new Date(date+'T00:00:00Z');
+  monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
+  const start=monday.toISOString().slice(0,10);
+  monday.setUTCDate(monday.getUTCDate()+6);
+  const end=monday.toISOString().slice(0,10);
+  const aggregate=selected=>{
+    const loot=new Map(), zeny=new Map();
+    for(const w of selected)for(const [name,boss,qty] of w.loot){
+      add(loot,name,qty);
+      if(name===rawZeny)add(zeny,bossName(boss),qty);
+    }
+    const hasLoot=selected.some(w=>w.lootLogged);
+    const total=key=>selected.reduce((sum,w)=>sum+w[key].length,0);
+    return {loot,zeny,hasLoot,values:[selected.length,total('ours'),total('rivals'),hasLoot?selected.reduce((sum,w)=>sum+sumLoot(w),0):'—']};
+  };
+  const daily=aggregate(waves.filter(w=>w.wave.slice(0,10)===date));
+  const weekly=aggregate(waves.filter(w=>w.wave.slice(0,10)>=start&&w.wave.slice(0,10)<=end));
+  const zenyBosses=[...new Set([...daily.zeny.keys(),...weekly.zeny.keys()])].sort((a,b)=>(weekly.zeny.get(b)||0)-(weekly.zeny.get(a)||0)||(daily.zeny.get(b)||0)-(daily.zeny.get(a)||0)||a.localeCompare(b));
+  const zenySubrows=zenyBosses.map(boss=>[boss,daily.hasLoot?daily.zeny.get(boss)||0:'—',weekly.hasLoot?weekly.zeny.get(boss)||0:'—']);
+  const dayZeny=daily.hasLoot?daily.loot.get(rawZeny)||0:'—';
+  const weekZeny=weekly.hasLoot?weekly.loot.get(rawZeny)||0:'—';
+  byId('periodDates').replaceChildren(make('span','Day · '+date),make('br',''),make('span','Week · '+start+' – '+end));
+  const totalsBody=byId('periodTotals');
+  totalsBody.replaceChildren(...['Completed waves','MVP kills','Rival kills','Tracked loot'].map((label,i)=>tableRow(label,daily.values[i],weekly.values[i])));
+  appendZenyTableRows(totalsBody,'periodTotals','MVP Zeny',dayZeny,weekZeny,zenySubrows);
+  updateTableTail(totalsBody);
+  const items=[...new Set([...daily.loot.keys(),...weekly.loot.keys()])].sort((a,b)=>(weekly.loot.get(b)||0)-(weekly.loot.get(a)||0)||a.localeCompare(b));
+  const lootBody=byId('periodLoot');
+  lootBody.replaceChildren();
+  for(const name of items){
+    if(name===rawZeny)appendZenyTableRows(lootBody,'periodLoot',rawZeny,dayZeny,weekZeny,zenySubrows);
+    else lootBody.append(tableRow(name,daily.loot.get(name)||0,weekly.loot.get(name)||0));
+  }
+  if(!items.length){const tr=make('tr',''),td=make('td','No tracked pickups for these periods.','muted');td.colSpan=3;tr.append(td);lootBody.append(tr)}
+  updateTableTail(lootBody);
+}
+function waveView(){
+  const w=waves.find(x=>x.wave===byId('wave').value);
+  byId('waveLabel').textContent=w.wave===waves[0].wave?'Latest completed wave':'Selected wave';
+  byId('waveTitle').textContent=(apoc(w)?'Apocalypse':'Regular')+' · '+stamp(w)+' · Guatemala time';
+  byId('stats').replaceChildren(...[[w.ours.length,'MVP kills'],[w.rivals.length,'Rival kills'],[w.lootLogged?sumLoot(w):'—','Tracked loot']].map(([value,label])=>{const el=make('div','');el.append(make('strong',value),make('span',label));return el}));
+  const loot=byId('loot');loot.replaceChildren();
+  if(!w.lootLogged)loot.append(make('p','No tracked pickups in the available log for this wave.','muted'));
+  const zeny=new Map(), items=[];
+  for(const entry of w.loot){
+    if(entry[0]===rawZeny)add(zeny,bossName(entry[1]),entry[2]);
+    else items.push(entry);
+  }
+  const totalZeny=[...zeny.values()].reduce((a,b)=>a+b,0);
+  if(zeny.size){
+    const zenyEntries=[...zeny]
+      .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+      .map(([boss,amount])=>[boss,amount,shareText(amount,totalZeny)]);
+    loot.append(zenyRow('loot',rawZeny,number(totalZeny),plural(zenyEntries.length,'MVP')+' · click for details',zenyEntries));
+  }
+  items.sort((a,b)=>Number(minerals.has(a[0]))-Number(minerals.has(b[0]))||b[2]-a[2]);
+  for(const [name,boss,qty] of items)loot.append(row(name,'×'+number(qty),boss==='source unknown'?'':boss));
+  byId('kills').replaceChildren(...w.ours.map(boss=>row(boss,'AkaZaa')),...w.rivals.map(([boss,killer])=>row(boss,'Rival',killer)),...w.unknown.map(boss=>row(boss,'Unknown')));
+}
+function historyView(){
+  const filter=byId('filter').value;
+  const selected=waves.filter(w=>filter==='all'||apoc(w)===(filter==='apoc'));
+  const history=byId('history');history.replaceChildren();
+  const peak=Math.max(1,...selected.slice(0,8).map(w=>w.ours.length));
+  const bosses=new Map(),rivals=new Map(),loot=new Map(),zeny=new Map(),zenyWaves=new Map();
+  let allZenyWaves=0;
+  for(const w of selected){
+    for(const boss of w.ours)add(bosses,boss);
+    for(const [,rival] of w.rivals)add(rivals,rival);
+    const seenZenyBosses=new Set();
+    for(const [item,boss,qty] of w.loot){
+      if(item===rawZeny){
+        const source=bossName(boss);
+        add(zeny,source,qty);
+        seenZenyBosses.add(source);
+      }else add(loot,JSON.stringify([item,boss]),qty);
+    }
+    if(seenZenyBosses.size){
+      allZenyWaves+=1;
+      for(const source of seenZenyBosses)add(zenyWaves,source);
+    }
+  }
+  history.append(make('p',selected.length+' waves · '+[...bosses.values()].reduce((a,b)=>a+b,0)+' MVP kills','muted'));
+  for(const w of selected.slice(0,8)){
+    history.append(row(stamp(w),w.ours.length,apoc(w)?'Apocalypse':''));
+    const bar=make('div','','bar'),fill=make('i','');fill.style.width=(100*w.ours.length/peak)+'%';bar.append(fill);history.append(bar);
+  }
+  const sorted=map=>[...map].sort((a,b)=>b[1]-a[1]);
+  const lootHistory=byId('lootHistory');lootHistory.replaceChildren();
+  const totalZeny=[...zeny.values()].reduce((a,b)=>a+b,0);
+  if(zeny.size){
+    const zenyEntries=[...zeny]
+      .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+      .map(([boss,amount])=>{
+        const waveCount=zenyWaves.get(boss);
+        const note=[plural(waveCount,'wave'),'avg '+number(Math.round(amount/waveCount)),shareText(amount,totalZeny)].filter(Boolean).join(' · ');
+        return [boss,amount,note];
+      });
+    lootHistory.append(zenyRow('lootHistory',rawZeny,number(totalZeny),plural(zenyEntries.length,'MVP')+' across '+plural(allZenyWaves,'wave')+' · click for details',zenyEntries));
+  }
+  for(const [key,qty] of sorted(loot)){const [name,boss]=JSON.parse(key);lootHistory.append(row(name,'×'+number(qty),boss==='source unknown'?'':boss))}
+  byId('rankings').replaceChildren(make('p','MVPs killed by AkaZaa','muted'),...sorted(bosses).slice(0,5).map(([name,count])=>row(name,count)),make('p','Rival kills','muted'),...sorted(rivals).slice(0,5).map(([name,count])=>row(name,count)));
+}
+async function refresh(){
+  try{
+    const response=await fetch('./waves.json?t='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw Error('fetch');
+    const next=await response.json();
+    if(!next.length){byId('status').textContent='Waiting for the first hunter upload.';return}
+    const oldLatest=waves[0]?.wave, current=byId('wave').value, currentDay=byId('day').value;
+    lootWaves=next.map(w=>({...w,loot:w.loot.filter(isConfirmedLoot),pickups:w.pickups?.filter(isConfirmedLoot)}));
+    waves=lootWaves.filter(w=>!w.lootOnly);
+    byId('dashboard').hidden=false;
+    byId('huntTab').disabled=!waves.length;
+    if(!waves.length){byId('status').textContent='Waiting for the first completed hunt wave.';showLoot(true);renderLoot();return}
+    const dates=[...new Set(waves.map(w=>w.wave.slice(0,10)))];
+    byId('day').replaceChildren(...dates.map(date=>{const option=make('option',date);option.value=date;return option}));
+    if(currentDay!==oldLatest?.slice(0,10)&&dates.includes(currentDay))byId('day').value=currentDay;
+    byId('wave').replaceChildren(...waves.map(w=>{const option=make('option',stamp(w)+(apoc(w)?' · Apocalypse':''));option.value=w.wave;return option}));
+    if(current!==oldLatest&&waves.some(w=>w.wave===current))byId('wave').value=current;
+    byId('status').textContent='Latest completed wave · '+stamp(waves[0])+' (Guatemala time)';
+    byId('dashboard').hidden=false;
+    periodView();waveView();historyView();renderLoot();
+  }catch{byId('status').textContent='Could not refresh hunt history. Retrying shortly.'}
+}
+byId('wave').addEventListener('change',waveView);byId('filter').addEventListener('change',historyView);
+byId('day').addEventListener('change',periodView);
+refresh();setInterval(refresh,60000);
+</script></html>
