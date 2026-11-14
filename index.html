@@ -25,6 +25,7 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 .zeny-list{padding:2px 0 6px 14px;margin:2px 0 4px 6px;border-left:2px solid var(--line)}.zeny-list .row{padding:5px 0;font-size:13px}.zeny-list .row b{color:var(--ink);font-weight:600}
 .zeny-box{border:1px solid var(--line);background:#12211f;border-radius:10px;padding:10px 14px;margin:0 0 16px}.zeny-box details.zeny-group>summary.row{padding:0}.zeny-box details.zeny-group[open]>summary.row{padding-bottom:8px;margin-bottom:4px}.zeny-box p{margin:0}
 .row-toggle{background:none;border:0;border-radius:0;padding:0;margin:0;width:100%;display:flex;align-items:flex-start;gap:2px;text-align:left;color:inherit;font:inherit;cursor:pointer}.row-toggle:focus-visible{outline-offset:2px}.row-toggle .zeny-caret{margin-top:2px;flex-shrink:0}.row-toggle small{font-size:11px;margin-top:2px}.totals-table tr.expandable{cursor:pointer}.totals-table tr.subrow th{padding-left:20px;color:var(--muted);font-size:13px}.totals-table tr.subrow td{color:var(--ink);font-weight:500;font-size:13px}
+.price-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.btn-subtle{font-size:12px;padding:6px 10px}
 </style>
 <main><header><p class="eyebrow">Ragnarok M · AkaZaa</p><h1>MVP Hunter</h1><p class="muted" id="status" role="status">Loading hunt history…</p></header>
 <section id="dashboard" hidden>
@@ -54,6 +55,7 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 <div id="rawZeny" class="zeny-box"></div>
 <div id="lootTimeline" hidden></div>
 <div id="lootByName">
+<div class="price-bar"><p class="muted" id="marketNote" style="margin:0" hidden></p><button type="button" id="resetPrices" class="btn-subtle" hidden>Reset to weekly prices</button></div>
 <p class="muted">Enter a price per item in thousands. Type 500 for $500K.</p>
 <p id="priceStatus" class="muted" role="status"></p>
 <table class="loot-table"><thead><tr><th scope="col">Item</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Total</th></tr></thead><tbody id="lootTable"></tbody></table></div></section>
@@ -68,9 +70,13 @@ const minerals = new Set(['Elunium','Oridecon','Shining Holy Water','Time Twiste
 const watchlist = ["Elunium","Oridecon","Nile's Bracelet","Eye of Dullahan","Orleans's Gloves","Shining Holy Water","Static Shield","Goibne's Armor","Matyr's Leash","Lance of Dragon Tamer","Holy Avenger","Slash","Stone Buckler","Time Twister","Orleans's Gown","Imperial Guard","Crystal Pumps","Fire Ninja Shinobi's Belt","Snake Demon's Pupils","Hollgrehenn's Refined Hammer","Shield of Naga","Monocle Blueprint"];
 const priceStorage = 'mvp-hunter-prices';
 const defaultPrices = {"Crystal Pumps":822,"Elunium":25,"Eye of Dullahan":350,"Fire Ninja Shinobi's Belt":890,"Goibne's Armor":257,"Hollgrehenn's Refined Hammer":309,"Holy Avenger":350,"Imperial Guard":328,"Lance of Dragon Tamer":432,"Matyr's Leash":300,"Monocle Blueprint":1833,"Nile's Bracelet":534,"Oridecon":33,"Orleans's Gloves":748,"Orleans's Gown":776,"Shield of Naga":375,"Shining Holy Water":298,"Slash":352,"Snake Demon's Pupils":113,"Static Shield":400,"Stone Buckler":375,"Time Twister":102};
+const embeddedMarket = __MARKET_PRICES__;
 const offline = true;
+const hostedStatic = () => offline && location.protocol !== 'file:';
 const formatK = value => '$'+value.toLocaleString('en-US',{maximumFractionDigits:3})+'K';
+let market = embeddedMarket && embeddedMarket.prices ? embeddedMarket : {updated:null,source:'poring.gg',prices:defaultPrices};
 let prices = {};
+let pricesLoaded = false;
 let waves = [];
 let lootWaves = [];
 let pendingSaves = Promise.resolve();
@@ -204,6 +210,48 @@ function renderLoot(){
   timeline.replaceChildren(fragment);
 }
 for(const id of ['lootPeriod','lootDate','lootOrder'])byId(id).addEventListener('change',renderLoot);
+function readLocalPriceState(marketUpdated){
+  try{
+    const raw=JSON.parse(localStorage.getItem(priceStorage)||'null');
+    if(!raw||typeof raw!=='object')return {marketUpdated,overrides:{}};
+    if(typeof raw.marketUpdated==='string'&&raw.overrides&&typeof raw.overrides==='object'){
+      if(!marketUpdated||raw.marketUpdated===marketUpdated)return {marketUpdated:raw.marketUpdated,overrides:raw.overrides};
+      const fresh={marketUpdated,overrides:{}};
+      localStorage.setItem(priceStorage,JSON.stringify(fresh));
+      return fresh;
+    }
+    if(marketUpdated){
+      const fresh={marketUpdated,overrides:{}};
+      localStorage.setItem(priceStorage,JSON.stringify(fresh));
+      return fresh;
+    }
+    return {marketUpdated:null,overrides:raw};
+  }catch{return {marketUpdated,overrides:{}}}
+}
+function updateMarketUI(overrides={}){
+  const count=Object.keys(overrides).length;
+  const note=byId('marketNote');
+  if(market.updated){
+    const source=(market.source||'poring.gg').replace(/^https?:\/\//,'');
+    const base='Weekly market prices · '+market.updated+' ('+source+')';
+    note.textContent=count?base+' · '+plural(count,'custom edit'):base;
+    note.hidden=false;
+  }else note.hidden=true;
+  byId('resetPrices').hidden=!offline||!count;
+}
+function applyPricesState(){
+  const base={...defaultPrices,...(market.prices||{})};
+  if(offline){
+    const state=readLocalPriceState(market.updated||null);
+    prices={...base,...state.overrides};
+    updateMarketUI(state.overrides);
+  }else{
+    prices=base;
+    updateMarketUI({});
+  }
+  for(const [name,{input}] of lootRows)input.value=prices[name]??'';
+  if(lootRows.size)updateValues();
+}
 function savePrice(name,input){
   if(!input.validity.valid){
     byId('priceStatus').textContent='Enter a price from 0 to 1,000,000K, with up to three decimals.';
@@ -214,10 +262,14 @@ function savePrice(name,input){
   pendingSaves=pendingSaves.then(async()=>{
     try{
       if(offline){
-        const saved=JSON.parse(localStorage.getItem(priceStorage)||'{}');
-        if(price===null){if(name in defaultPrices)saved[name]=null;else delete saved[name];delete prices[name]}
-        else{saved[name]=price;prices[name]=price}
-        localStorage.setItem(priceStorage,JSON.stringify(saved));
+        const state=readLocalPriceState(market.updated||null);
+        const overrides={...state.overrides};
+        const marketPrice=market.prices?.[name]??defaultPrices[name];
+        if(price===null){overrides[name]=null;delete prices[name]}
+        else if(price===marketPrice){delete overrides[name];prices[name]=price}
+        else{overrides[name]=price;prices[name]=price}
+        localStorage.setItem(priceStorage,JSON.stringify({marketUpdated:market.updated||null,overrides}));
+        updateMarketUI(overrides);
       }else{
         const response=await fetch('/api/prices',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price})});
         if(!response.ok)throw Error('save');
@@ -226,11 +278,23 @@ function savePrice(name,input){
     }catch{byId('priceStatus').textContent='Price could not be saved. Edit the field to retry.'}
   });
 }
-async function loadPrices(){
-  prices={...defaultPrices};
+async function syncHostedPrices(){
+  if(!hostedStatic())return;
   try{
-    if(offline)Object.assign(prices,JSON.parse(localStorage.getItem(priceStorage)||'{}'));
-    else{
+    const response=await fetch('./prices.json?t='+Date.now(),{cache:'no-store'});
+    if(!response.ok)return;
+    const next=await response.json();
+    if(next&&next.prices&&typeof next.prices==='object'){
+      const changed=next.updated!==market.updated||JSON.stringify(next.prices)!==JSON.stringify(market.prices);
+      if(changed){market=next;applyPricesState()}
+    }
+  }catch{}
+}
+async function loadPrices(){
+  applyPricesState();
+  try{
+    if(hostedStatic())await syncHostedPrices();
+    else if(!offline){
       const response=await fetch('/api/prices',{cache:'no-store'});
       if(!response.ok)throw Error('prices');
       Object.assign(prices,await response.json());
@@ -248,6 +312,7 @@ async function loadPrices(){
     priceCell.append(price);valueCell.append(value);tr.append(title,qty,priceCell,valueCell);byId('lootTable').append(tr);
     lootRows.set(name,{qty,value,input});
   }
+  pricesLoaded=true;
   updateValues();
 }
 function showLoot(show){
@@ -256,6 +321,12 @@ function showLoot(show){
 }
 byId('huntTab').addEventListener('click',()=>showLoot(false));
 byId('lootTab').addEventListener('click',()=>showLoot(true));
+byId('resetPrices').addEventListener('click',()=>{
+  if(!offline)return;
+  localStorage.setItem(priceStorage,JSON.stringify({marketUpdated:market.updated||null,overrides:{}}));
+  applyPricesState();
+  byId('priceStatus').textContent='Restored weekly prices.';
+});
 loadPrices();
 const sumLoot = w => w.loot.reduce((total,[name,,qty])=>total+(name===rawZeny?0:qty),0);
 function periodView(){
@@ -382,6 +453,7 @@ async function refresh(){
     if(current!==oldLatest&&waves.some(w=>w.wave===current))byId('wave').value=current;
     byId('status').textContent='Latest completed wave · '+stamp(waves[0])+' (Guatemala time)';
     byId('dashboard').hidden=false;
+    if(pricesLoaded&&hostedStatic())await syncHostedPrices();
     periodView();waveView();historyView();renderLoot();
   }catch{byId('status').textContent='Could not refresh hunt history. Retrying shortly.'}
 }
