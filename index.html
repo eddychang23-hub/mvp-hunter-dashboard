@@ -67,6 +67,7 @@ const stamp = w => w.wave.replace('T',' · ');
 const minerals = new Set(['Elunium','Oridecon','Shining Holy Water','Time Twister',"Snake Demon's Pupils"]);
 const watchlist = ["Elunium","Oridecon","Nile's Bracelet","Eye of Dullahan","Orleans's Gloves","Shining Holy Water","Static Shield","Goibne's Armor","Matyr's Leash","Lance of Dragon Tamer","Holy Avenger","Slash","Stone Buckler","Time Twister","Orleans's Gown","Imperial Guard","Crystal Pumps","Fire Ninja Shinobi's Belt","Snake Demon's Pupils","Hollgrehenn's Refined Hammer"];
 const priceStorage = 'mvp-hunter-prices';
+const defaultPrices = {"Crystal Pumps":822,"Elunium":25,"Eye of Dullahan":350,"Fire Ninja Shinobi's Belt":890,"Goibne's Armor":257,"Hollgrehenn's Refined Hammer":309,"Holy Avenger":350,"Imperial Guard":328,"Lance of Dragon Tamer":432,"Matyr's Leash":300,"Nile's Bracelet":534,"Oridecon":33,"Orleans's Gloves":748,"Orleans's Gown":776,"Shining Holy Water":298,"Slash":352,"Snake Demon's Pupils":113,"Static Shield":400,"Stone Buckler":375,"Time Twister":102};
 const offline = true;
 const formatK = value => '$'+value.toLocaleString('en-US',{maximumFractionDigits:3})+'K';
 let prices = {};
@@ -213,8 +214,10 @@ function savePrice(name,input){
   pendingSaves=pendingSaves.then(async()=>{
     try{
       if(offline){
-        if(price===null)delete prices[name];else prices[name]=price;
-        localStorage.setItem(priceStorage,JSON.stringify(prices));
+        const saved=JSON.parse(localStorage.getItem(priceStorage)||'{}');
+        if(price===null){if(name in defaultPrices)saved[name]=null;else delete saved[name];delete prices[name]}
+        else{saved[name]=price;prices[name]=price}
+        localStorage.setItem(priceStorage,JSON.stringify(saved));
       }else{
         const response=await fetch('/api/prices',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price})});
         if(!response.ok)throw Error('save');
@@ -224,12 +227,13 @@ function savePrice(name,input){
   });
 }
 async function loadPrices(){
+  prices={...defaultPrices};
   try{
-    if(offline)prices=JSON.parse(localStorage.getItem(priceStorage)||'{}');
+    if(offline)Object.assign(prices,JSON.parse(localStorage.getItem(priceStorage)||'{}'));
     else{
       const response=await fetch('/api/prices',{cache:'no-store'});
       if(!response.ok)throw Error('prices');
-      prices=await response.json();
+      Object.assign(prices,await response.json());
     }
   }catch{byId('priceStatus').textContent='Saved prices could not be loaded.'}
   for(const name of [...watchlist].sort((a,b)=>a.localeCompare(b))){
