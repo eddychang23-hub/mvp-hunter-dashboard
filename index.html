@@ -166,15 +166,19 @@ function updateValues(events=lootEvents()){
       totalPickups+=count;
     }
   }
-  let total=0;
-  for(const [name,{qty,value,input}] of lootRows){
+  let total=0, visibleRows=0;
+  for(const [name,{tr,qty,value,input}] of lootRows){
     const count=counts.get(name)||0;
+    tr.hidden=!count;
+    if(count)visibleRows++;
     qty.textContent=count.toLocaleString('en-US');
     const unit=input.valueAsNumber;
     const subtotal=count*unit;
     value.textContent=Number.isFinite(subtotal)&&unit>=0?formatK(subtotal):'—';
     if(Number.isFinite(subtotal)&&unit>=0)total+=subtotal;
   }
+  const emptyRow=byId('lootEmpty');
+  if(emptyRow)emptyRow.hidden=visibleRows>0;
   byId('grandValue').textContent='Priced loot · '+formatK(total);
   const rawZenyTotal=counts.get(rawZeny)||0;
   const entries=[...zeny]
@@ -310,8 +314,11 @@ async function loadPrices(){
     input.addEventListener('change',()=>savePrice(name,input));
     const price=make('label','','price');price.append(make('span','$'),input,make('span','K'));
     priceCell.append(price);valueCell.append(value);tr.append(title,qty,priceCell,valueCell);byId('lootTable').append(tr);
-    lootRows.set(name,{qty,value,input});
+    lootRows.set(name,{tr,qty,value,input});
   }
+  const emptyRow=make('tr','');emptyRow.id='lootEmpty';emptyRow.hidden=true;
+  const emptyCell=make('td','No tracked items for this period.','muted');emptyCell.colSpan=4;
+  emptyRow.append(emptyCell);byId('lootTable').append(emptyRow);
   pricesLoaded=true;
   updateValues();
 }
