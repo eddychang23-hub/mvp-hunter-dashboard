@@ -26,6 +26,9 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 .zeny-box{border:1px solid var(--line);background:#12211f;border-radius:10px;padding:10px 14px;margin:0 0 16px}.zeny-box details.zeny-group>summary.row{padding:0}.zeny-box details.zeny-group[open]>summary.row{padding-bottom:8px;margin-bottom:4px}.zeny-box p{margin:0}
 .row-toggle{background:none;border:0;border-radius:0;padding:0;margin:0;width:100%;display:flex;align-items:flex-start;gap:2px;text-align:left;color:inherit;font:inherit;cursor:pointer}.row-toggle:focus-visible{outline-offset:2px}.row-toggle .zeny-caret{margin-top:2px;flex-shrink:0}.row-toggle small{font-size:11px;margin-top:2px}.totals-table tr.expandable{cursor:pointer}.totals-table tr.subrow th{padding-left:20px;color:var(--muted);font-size:13px}.totals-table tr.subrow td{color:var(--ink);font-weight:500;font-size:13px}
 .price-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.btn-subtle{font-size:12px;padding:6px 10px}
+.loot-chart-box{border:1px solid var(--line);background:#12211f;border-radius:10px;padding:10px 14px;margin:0 0 16px}.loot-chart-box>summary{font-weight:600;font-size:14px}.loot-chart-box>summary span{font-weight:400;font-size:12px}.loot-chart-box[open]>summary{margin-bottom:10px}.loot-chart-box[open]>summary span{display:none}
+.loot-chart-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.loot-chart-bar select{font-size:13px;padding:6px 10px}.loot-chart-readout{font-size:12px;font-variant-numeric:tabular-nums}
+.loot-chart svg{display:block;width:100%;height:auto;overflow:visible}.loot-chart text{fill:var(--muted);font:11px system-ui,sans-serif;font-variant-numeric:tabular-nums}.loot-chart .chart-grid{stroke:var(--line);stroke-dasharray:3 3}.loot-chart .chart-axis{stroke:var(--line)}.loot-chart .chart-line{fill:none;stroke:var(--teal);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.loot-chart .chart-hit{cursor:pointer}.loot-chart .chart-hit:focus-visible{outline:2px solid var(--gold)}
 </style>
 <main><header><p class="eyebrow">Ragnarok M · AkaZaa</p><h1>MVP Hunter</h1><p class="muted" id="status" role="status">Loading hunt history…</p></header>
 <section id="dashboard" hidden>
@@ -49,10 +52,12 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 <section id="lootView" class="panel" hidden><div class="toolbar"><h2>Loot</h2><strong id="grandValue"></strong></div>
 <div class="toolbar">
 <select id="lootPeriod" aria-label="Loot period"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option><option value="all">All time</option></select>
-<input type="date" id="lootDate" aria-label="Loot date">
+<select id="lootDay" aria-label="Select a loot date"></select>
+<input type="date" id="lootDate" aria-label="Loot date" hidden>
 <select id="lootOrder" aria-label="Loot view"><option value="name">By name</option><option value="recent">Recent drops</option><option value="oldest">Oldest first</option></select>
 </div>
 <div id="rawZeny" class="zeny-box"></div>
+<details id="lootChartBox" class="loot-chart-box"><summary>Daily loot trend <span class="muted">· expand line graph</span></summary><div class="loot-chart-bar"><select id="lootChartMetric" aria-label="Line graph metric"><option value="priced">Priced loot ($K)</option><option value="zeny">MVP Zeny</option><option value="items">Tracked items (qty)</option></select><span id="lootChartReadout" class="muted loot-chart-readout"></span></div><div id="lootChart" class="loot-chart"></div></details>
 <div id="lootTimeline" hidden></div>
 <div id="lootByName">
 <div class="price-bar"><p class="muted" id="marketNote" style="margin:0" hidden></p><button type="button" id="resetPrices" class="btn-subtle" hidden>Reset to weekly prices</button></div>
@@ -65,7 +70,32 @@ const byId = id => document.getElementById(id);
 const make = (tag,text,cls) => {const el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;return el};
 const row = (name,value,note) => {const el=make('div','','row'), label=make('span',name);if(note)label.append(make('small',note));el.append(label,make('b',value));return el};
 const apoc = w => /T(12|22):00$/.test(w.wave);
-const stamp = w => w.wave.replace('T',' · ');
+const pad2 = n => String(n).padStart(2,'0');
+const localCache = new Map();
+const parseSourceTime = value => {
+  const iso=String(value||'').trim().replace(' ','T');
+  if(!iso)return null;
+  const d=new Date(/([zZ]|[+-]\d{2}:?\d{2})$/.test(iso)?iso:iso+'-06:00');
+  return Number.isNaN(d.getTime())?null:d;
+};
+const localParts = value => {
+  if(localCache.has(value))return localCache.get(value);
+  const d=parseSourceTime(value);
+  let parts=null;
+  if(d){
+    const date=d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+    const hm=pad2(d.getHours())+':'+pad2(d.getMinutes());
+    parts={ms:d.getTime(),date,stamp:date+' · '+hm,full:date+' '+hm+':'+pad2(d.getSeconds())};
+  }
+  localCache.set(value,parts);
+  return parts;
+};
+const stamp = w => localParts(w.wave)?.stamp||w.wave.replace('T',' · ');
+const waveDay = w => localParts(w.wave)?.date||w.wave.slice(0,10);
+const eventDay = ts => localParts(ts)?.date||ts.slice(0,10);
+const eventTime = ts => localParts(ts)?.full||ts.slice(0,19);
+const eventMs = ts => localParts(ts)?.ms??0;
+const todayLocal = () => {const d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())};
 const minerals = new Set(['Elunium','Oridecon','Shining Holy Water','Time Twister',"Snake Demon's Pupils"]);
 const watchlist = ["Elunium","Oridecon","Nile's Bracelet","Eye of Dullahan","Orleans's Gloves","Shining Holy Water","Static Shield","Goibne's Armor","Matyr's Leash","Lance of Dragon Tamer","Holy Avenger","Slash","Stone Buckler","Time Twister","Orleans's Gown","Imperial Guard","Crystal Pumps","Fire Ninja Shinobi's Belt","Snake Demon's Pupils","Hollgrehenn's Refined Hammer","Shield of Naga","Monocle Blueprint"];
 const priceStorage = 'mvp-hunter-prices';
@@ -133,10 +163,16 @@ function appendZenyTableRows(tbody,key,label,dayVal,weekVal,subrows){
     updateTableTail(tbody);
   });
 }
-byId('lootDate').value = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Guatemala',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-function lootEvents(){
-  const date=byId('lootDate').value;
+let lootDayCustom = false;
+byId('lootDate').value = todayLocal();
+function allLootEvents(){
+  return lootWaves.flatMap(w=>w.pickups?.length?w.pickups:w.loot.map(
+    ([name,boss,qty])=>[name,boss,qty,w.wave.replace('T',' '),1,true]
+  )).filter(isConfirmedLoot);
+}
+function lootPeriodRange(){
   const period=byId('lootPeriod').value;
+  const date=(period==='day'?byId('lootDay').value||byId('lootDate').value:byId('lootDate').value)||todayLocal();
   let start=date, end=date;
   if(period==='week'&&date){
     const monday=new Date(date+'T00:00:00Z');
@@ -145,14 +181,158 @@ function lootEvents(){
     monday.setUTCDate(monday.getUTCDate()+6);
     end=monday.toISOString().slice(0,10);
   }
-  return lootWaves.flatMap(w=>w.pickups?.length?w.pickups:w.loot.map(
-    ([name,boss,qty])=>[name,boss,qty,w.wave.replace('T',' '),1,true]
-  )).filter(isConfirmedLoot).filter(([,,,timestamp])=>{
-    const day=timestamp.slice(0,10);
+  return {period,date,start,end};
+}
+function syncLootDays(){
+  const prev=byId('lootDay').value;
+  const days=[...new Set(allLootEvents().map(([,,,ts])=>eventDay(ts)))].sort((a,b)=>b.localeCompare(a));
+  const select=byId('lootDay');
+  if(!days.length){
+    const opt=make('option','No loot dates');opt.value='';opt.disabled=true;
+    select.replaceChildren(opt);
+    return;
+  }
+  select.replaceChildren(...days.map(d=>{const opt=make('option',d);opt.value=d;return opt}));
+  const today=todayLocal();
+  const pick=lootDayCustom&&days.includes(prev)?prev:(days.includes(today)?today:days[0]);
+  select.value=pick;
+  if(byId('lootPeriod').value==='day')byId('lootDate').value=pick;
+}
+function lootEvents(){
+  const {period,date,start,end}=lootPeriodRange();
+  return allLootEvents().filter(([,,,timestamp])=>{
+    const day=eventDay(timestamp);
     if(period==='all')return true;
     if(period==='month')return day.slice(0,7)===date.slice(0,7);
     return day>=start&&day<=end;
   });
+}
+function unitPriceFor(name){
+  const rowEntry=lootRows.get(name);
+  if(rowEntry){
+    const v=rowEntry.input.valueAsNumber;
+    return Number.isFinite(v)&&v>=0?v:0;
+  }
+  const v=prices[name];
+  return Number.isFinite(v)&&v>=0?v:0;
+}
+function niceMax(v){
+  if(v<=0)return 4;
+  const mag=Math.pow(10,Math.floor(Math.log10(v)));
+  const norm=v/mag;
+  const step=norm<=1.2?1.2:norm<=2?2:norm<=3?3:norm<=4?4:norm<=5?5:norm<=8?8:10;
+  return step*mag;
+}
+function renderLootChart(){
+  const container=byId('lootChart');
+  const readout=byId('lootChartReadout');
+  const metric=byId('lootChartMetric').value;
+  const byDay=new Map();
+  for(const [name,,qty,ts,count] of allLootEvents()){
+    const day=eventDay(ts);
+    if(!byDay.has(day))byDay.set(day,{day,priced:0,zeny:0,items:0});
+    const d=byDay.get(day);
+    const totalQty=qty*count;
+    if(name===rawZeny)d.zeny+=totalQty;
+    else{
+      d.items+=totalQty;
+      d.priced+=totalQty*unitPriceFor(name);
+    }
+  }
+  const series=[...byDay.values()].sort((a,b)=>a.day.localeCompare(b.day));
+  if(!series.length){
+    readout.textContent='';
+    container.replaceChildren(make('p','No loot data available yet.','muted'));
+    return;
+  }
+  const fmtSummary=d=>d.day+' · '+formatK(d.priced)+' · '+plural(d.items,'item')+' · '+number(d.zeny)+' Zeny';
+  const {period,date,start,end}=lootPeriodRange();
+  const isActiveDay=day=>{
+    if(period==='all')return false;
+    if(period==='month')return day.slice(0,7)===date.slice(0,7);
+    return day>=start&&day<=end;
+  };
+  const defaultPoint=[...series].reverse().find(d=>isActiveDay(d.day))||series[series.length-1];
+  readout.textContent=fmtSummary(defaultPoint);
+  const ns='http://www.w3.org/2000/svg';
+  const svgEl=(tag,attrs={})=>{
+    const el=document.createElementNS(ns,tag);
+    for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));
+    return el;
+  };
+  const W=680,H=220,L=72,R=18,T=16,B=34,pw=W-L-R,ph=H-T-B;
+  const yMax=niceMax(Math.max(...series.map(d=>d[metric]),0));
+  const svg=svgEl('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Daily loot line graph'});
+  const defs=svgEl('defs');
+  const grad=svgEl('linearGradient',{id:'lootAreaGrad',x1:0,y1:0,x2:0,y2:1});
+  grad.append(
+    svgEl('stop',{offset:'0%','stop-color':'#82d9c5','stop-opacity':'0.28'}),
+    svgEl('stop',{offset:'100%','stop-color':'#82d9c5','stop-opacity':'0'})
+  );
+  defs.append(grad);svg.append(defs);
+  for(let i=0;i<=4;i++){
+    const frac=i/4,y=T+ph-frac*ph;
+    svg.append(svgEl('line',{x1:L,y1:y,x2:W-R,y2:y,class:i===0?'chart-axis':'chart-grid'}));
+    const tickVal=Math.round(yMax*frac);
+    const txt=svgEl('text',{x:L-8,y:y+4,'text-anchor':'end'});
+    txt.textContent=metric==='priced'?'$'+number(tickVal)+'K':number(tickVal);
+    svg.append(txt);
+  }
+  const pts=series.map((d,i)=>({
+    d,
+    x:series.length===1?L+pw/2:L+(i/(series.length-1))*pw,
+    y:T+ph-(d[metric]/yMax)*ph,
+    active:isActiveDay(d.day)
+  }));
+  if(pts.length>=2){
+    const linePath=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+    const areaPath=linePath+' L'+pts[pts.length-1].x.toFixed(1)+','+(T+ph)+' L'+pts[0].x.toFixed(1)+','+(T+ph)+' Z';
+    svg.append(svgEl('path',{d:areaPath,fill:'url(#lootAreaGrad)'}),svgEl('path',{d:linePath,class:'chart-line'}));
+  }else{
+    svg.append(svgEl('line',{x1:L,y1:pts[0].y,x2:W-R,y2:pts[0].y,class:'chart-grid','stroke-opacity':'0.6'}));
+  }
+  const maxLabels=7,step=pts.length<=maxLabels?1:Math.ceil((pts.length-1)/(maxLabels-1));
+  const dots=[];
+  pts.forEach((p,i)=>{
+    if(i===0||i===pts.length-1||(i%step===0&&(pts.length-1-i)>=Math.ceil(step*0.6))){
+      const xl=svgEl('text',{x:p.x,y:H-10,'text-anchor':i===0&&pts.length>1?'start':i===pts.length-1&&pts.length>1?'end':'middle'});
+      xl.textContent=p.d.day.slice(5);
+      svg.append(xl);
+    }
+    const dot=svgEl('circle',{cx:p.x,cy:p.y,r:p.active?5.5:4,fill:p.active?'#f4bd70':'#172625',stroke:p.active?'#101a1c':'#82d9c5','stroke-width':2});
+    dots.push({dot,p});
+    const hit=svgEl('circle',{cx:p.x,cy:p.y,r:14,fill:'transparent',class:'chart-hit',tabindex:0,role:'button','aria-label':fmtSummary(p.d)});
+    const focusPoint=()=>{
+      readout.textContent=fmtSummary(p.d);
+      for(const item of dots){
+        const hovered=item.p===p;
+        item.dot.setAttribute('r',hovered?6.5:(item.p.active?5.5:4));
+        item.dot.setAttribute('stroke',hovered?'#f4bd70':(item.p.active?'#101a1c':'#82d9c5'));
+      }
+    };
+    const resetPoint=()=>{
+      readout.textContent=fmtSummary(defaultPoint);
+      for(const item of dots){
+        item.dot.setAttribute('r',item.p.active?5.5:4);
+        item.dot.setAttribute('stroke',item.p.active?'#101a1c':'#82d9c5');
+      }
+    };
+    const selectPoint=()=>{
+      lootDayCustom=true;
+      byId('lootPeriod').value='day';
+      byId('lootDay').value=p.d.day;
+      byId('lootDate').value=p.d.day;
+      renderLoot();
+    };
+    hit.addEventListener('mouseenter',focusPoint);
+    hit.addEventListener('focus',focusPoint);
+    hit.addEventListener('mouseleave',resetPoint);
+    hit.addEventListener('blur',resetPoint);
+    hit.addEventListener('click',selectPoint);
+    hit.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectPoint()}});
+    svg.append(dot,hit);
+  });
+  container.replaceChildren(svg);
 }
 function updateValues(events=lootEvents()){
   const counts=new Map(), zeny=new Map(), zenyPickups=new Map();
@@ -193,27 +373,47 @@ function updateValues(events=lootEvents()){
       ?zenyRow('rawZeny','MVP Zeny collected',number(rawZenyTotal),plural(entries.length,'MVP')+' · '+plural(totalPickups,'pickup')+' · click for details',entries)
       :make('p','No confirmed MVP Zeny pickups for this period.','muted')
   );
+  renderLootChart();
 }
 function renderLoot(){
+  const period=byId('lootPeriod').value;
   const order=byId('lootOrder').value;
   const timeline=byId('lootTimeline');
-  byId('lootDate').disabled=byId('lootPeriod').value==='all';
+  byId('lootDay').hidden=period!=='day';
+  byId('lootDate').hidden=period==='day'||period==='all';
+  byId('lootDate').disabled=period==='all';
+  if(period==='day'){
+    const dayEl=byId('lootDay'), dateEl=byId('lootDate');
+    if([...dayEl.options].some(o=>o.value&&o.value===dateEl.value))dayEl.value=dateEl.value;
+    else if(dayEl.value)dateEl.value=dayEl.value;
+  }
   byId('lootByName').hidden=order!=='name';
   timeline.hidden=order==='name';
   const events=lootEvents();
   updateValues(events);
   if(timeline.hidden)return;
-  events.sort((a,b)=>(order==='recent'?-1:1)*a[3].localeCompare(b[3]));
+  events.sort((a,b)=>(order==='recent'?-1:1)*((eventMs(a[3])-eventMs(b[3]))||a[3].localeCompare(b[3])));
   const fragment=document.createDocumentFragment();
   for(const [name,boss,qty,time,count,summary] of events){
     const source=boss==='source unknown'?'':' · '+boss;
-    const note=time.slice(0,19)+(summary?' · wave total':'')+source;
+    const note=eventTime(time)+(summary?' · wave total':'')+source;
     fragment.append(row(name,'×'+number(qty*count),note));
   }
   if(!events.length)fragment.append(make('p','No recorded pickups for this period.','muted'));
   timeline.replaceChildren(fragment);
 }
-for(const id of ['lootPeriod','lootDate','lootOrder'])byId(id).addEventListener('change',renderLoot);
+byId('lootDay').addEventListener('change',()=>{
+  lootDayCustom=true;
+  byId('lootDate').value=byId('lootDay').value;
+  renderLoot();
+});
+byId('lootDate').addEventListener('change',()=>{
+  const v=byId('lootDate').value;
+  if([...byId('lootDay').options].some(o=>o.value===v)){byId('lootDay').value=v;lootDayCustom=true}
+  renderLoot();
+});
+byId('lootChartMetric').addEventListener('change',renderLootChart);
+for(const id of ['lootPeriod','lootOrder'])byId(id).addEventListener('change',renderLoot);
 function readLocalPriceState(marketUpdated){
   try{
     const raw=JSON.parse(localStorage.getItem(priceStorage)||'null');
@@ -353,8 +553,8 @@ function periodView(){
     const total=key=>selected.reduce((sum,w)=>sum+w[key].length,0);
     return {loot,zeny,hasLoot,values:[selected.length,total('ours'),total('rivals'),hasLoot?selected.reduce((sum,w)=>sum+sumLoot(w),0):'—']};
   };
-  const daily=aggregate(waves.filter(w=>w.wave.slice(0,10)===date));
-  const weekly=aggregate(waves.filter(w=>w.wave.slice(0,10)>=start&&w.wave.slice(0,10)<=end));
+  const daily=aggregate(waves.filter(w=>waveDay(w)===date));
+  const weekly=aggregate(waves.filter(w=>{const d=waveDay(w);return d>=start&&d<=end}));
   const zenyBosses=[...new Set([...daily.zeny.keys(),...weekly.zeny.keys()])].sort((a,b)=>(weekly.zeny.get(b)||0)-(weekly.zeny.get(a)||0)||(daily.zeny.get(b)||0)-(daily.zeny.get(a)||0)||a.localeCompare(b));
   const zenySubrows=zenyBosses.map(boss=>[boss,daily.hasLoot?daily.zeny.get(boss)||0:'—',weekly.hasLoot?weekly.zeny.get(boss)||0:'—']);
   const dayZeny=daily.hasLoot?daily.loot.get(rawZeny)||0:'—';
@@ -377,7 +577,7 @@ function periodView(){
 function waveView(){
   const w=waves.find(x=>x.wave===byId('wave').value);
   byId('waveLabel').textContent=w.wave===waves[0].wave?'Latest completed wave':'Selected wave';
-  byId('waveTitle').textContent=(apoc(w)?'Apocalypse':'Regular')+' · '+stamp(w)+' · Guatemala time';
+  byId('waveTitle').textContent=(apoc(w)?'Apocalypse':'Regular')+' · '+stamp(w)+' · Local time';
   byId('stats').replaceChildren(...[[w.ours.length,'MVP kills'],[w.rivals.length,'Rival kills'],[w.lootLogged?sumLoot(w):'—','Tracked loot']].map(([value,label])=>{const el=make('div','');el.append(make('strong',value),make('span',label));return el}));
   const loot=byId('loot');loot.replaceChildren();
   if(!w.lootLogged)loot.append(make('p','No tracked pickups in the available log for this wave.','muted'));
@@ -447,18 +647,19 @@ async function refresh(){
     if(!response.ok)throw Error('fetch');
     const next=await response.json();
     if(!next.length){byId('status').textContent='Waiting for the first hunter upload.';return}
-    const oldLatest=waves[0]?.wave, current=byId('wave').value, currentDay=byId('day').value;
+    const oldLatest=waves[0]?.wave, oldLatestDay=waves[0]?waveDay(waves[0]):undefined, current=byId('wave').value, currentDay=byId('day').value;
     lootWaves=next.map(w=>({...w,loot:w.loot.filter(isConfirmedLoot),pickups:w.pickups?.filter(isConfirmedLoot)}));
     waves=lootWaves.filter(w=>!w.lootOnly);
+    syncLootDays();
     byId('dashboard').hidden=false;
     byId('huntTab').disabled=!waves.length;
     if(!waves.length){byId('status').textContent='Waiting for the first completed hunt wave.';showLoot(true);renderLoot();return}
-    const dates=[...new Set(waves.map(w=>w.wave.slice(0,10)))];
+    const dates=[...new Set(waves.map(waveDay))].sort((a,b)=>b.localeCompare(a));
     byId('day').replaceChildren(...dates.map(date=>{const option=make('option',date);option.value=date;return option}));
-    if(currentDay!==oldLatest?.slice(0,10)&&dates.includes(currentDay))byId('day').value=currentDay;
+    if(currentDay!==oldLatestDay&&dates.includes(currentDay))byId('day').value=currentDay;
     byId('wave').replaceChildren(...waves.map(w=>{const option=make('option',stamp(w)+(apoc(w)?' · Apocalypse':''));option.value=w.wave;return option}));
     if(current!==oldLatest&&waves.some(w=>w.wave===current))byId('wave').value=current;
-    byId('status').textContent='Latest completed wave · '+stamp(waves[0])+' (Guatemala time)';
+    byId('status').textContent='Latest completed wave · '+stamp(waves[0])+' (local time)';
     byId('dashboard').hidden=false;
     if(pricesLoaded&&hostedStatic())await syncHostedPrices();
     periodView();waveView();historyView();renderLoot();
