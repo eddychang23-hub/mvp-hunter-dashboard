@@ -57,7 +57,7 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 <select id="lootOrder" aria-label="Loot view"><option value="name">By name</option><option value="recent">Recent drops</option><option value="oldest">Oldest first</option></select>
 </div>
 <div id="rawZeny" class="zeny-box"></div>
-<details id="lootChartBox" class="loot-chart-box"><summary>Daily loot trend <span class="muted">· expand line graph</span></summary><div class="loot-chart-bar"><select id="lootChartMetric" aria-label="Line graph metric"><option value="priced">Priced loot ($K)</option><option value="zeny">MVP Zeny</option><option value="items">Tracked items (qty)</option></select><span id="lootChartReadout" class="muted loot-chart-readout"></span></div><div id="lootChart" class="loot-chart"></div></details>
+<details id="lootChartBox" class="loot-chart-box"><summary>Daily loot trend <span class="muted">· expand line graph</span></summary><div class="loot-chart-bar"><select id="lootChartMetric" aria-label="Line graph metric"><option value="totalZeny">Total Zeny</option><option value="priced">Priced loot ($K)</option><option value="zeny">MVP Zeny</option><option value="items">Tracked items (qty)</option></select><span id="lootChartReadout" class="muted loot-chart-readout"></span></div><div id="lootChart" class="loot-chart"></div></details>
 <div id="lootTimeline" hidden></div>
 <div id="lootByName">
 <div class="price-bar"><p class="muted" id="marketNote" style="margin:0" hidden></p><button type="button" id="resetPrices" class="btn-subtle" hidden>Reset to weekly prices</button></div>
@@ -230,7 +230,7 @@ function renderLootChart(){
   const byDay=new Map();
   for(const [name,,qty,ts,count] of allLootEvents()){
     const day=eventDay(ts);
-    if(!byDay.has(day))byDay.set(day,{day,priced:0,zeny:0,items:0});
+    if(!byDay.has(day))byDay.set(day,{day,priced:0,zeny:0,totalZeny:0,items:0});
     const d=byDay.get(day);
     const totalQty=qty*count;
     if(name===rawZeny)d.zeny+=totalQty;
@@ -240,12 +240,13 @@ function renderLootChart(){
     }
   }
   const series=[...byDay.values()].sort((a,b)=>a.day.localeCompare(b.day));
+  for(const d of series)d.totalZeny=Math.round(d.priced*1000)+d.zeny;
   if(!series.length){
     readout.textContent='';
     container.replaceChildren(make('p','No loot data available yet.','muted'));
     return;
   }
-  const fmtSummary=d=>d.day+' · '+formatK(d.priced)+' · '+plural(d.items,'item')+' · '+number(d.zeny)+' Zeny';
+  const fmtSummary=d=>d.day+' · '+number(d.totalZeny)+' Total Zeny ('+formatK(d.priced)+' + '+number(d.zeny)+' Zeny)';
   const {period,date,start,end}=lootPeriodRange();
   const isActiveDay=day=>{
     if(period==='all')return false;
@@ -260,7 +261,7 @@ function renderLootChart(){
     for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));
     return el;
   };
-  const W=680,H=220,L=72,R=18,T=16,B=34,pw=W-L-R,ph=H-T-B;
+  const W=680,H=220,L=84,R=18,T=16,B=34,pw=W-L-R,ph=H-T-B;
   const yMax=niceMax(Math.max(...series.map(d=>d[metric]),0));
   const svg=svgEl('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Daily loot line graph'});
   const defs=svgEl('defs');
