@@ -29,11 +29,53 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 .loot-chart-box{border:1px solid var(--line);background:#12211f;border-radius:10px;padding:10px 14px;margin:0 0 16px}.loot-chart-box>summary{font-weight:600;font-size:14px}.loot-chart-box>summary span{font-weight:400;font-size:12px}.loot-chart-box[open]>summary{margin-bottom:10px}.loot-chart-box[open]>summary span{display:none}
 .loot-chart-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.loot-chart-bar select{font-size:13px;padding:6px 10px}.loot-chart-readout{font-size:12px;font-variant-numeric:tabular-nums}
 .loot-chart svg{display:block;width:100%;height:auto;overflow:visible}.loot-chart text{fill:var(--muted);font:11px system-ui,sans-serif;font-variant-numeric:tabular-nums}.loot-chart .chart-grid{stroke:var(--line);stroke-dasharray:3 3}.loot-chart .chart-axis{stroke:var(--line)}.loot-chart .chart-line{fill:none;stroke:var(--teal);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.loot-chart .chart-hit{cursor:pointer}.loot-chart .chart-hit:focus-visible{outline:2px solid var(--gold)}
+.live-panel{margin-bottom:20px;transition:border-color .2s ease}.live-panel[data-active=true]{border-color:#3f766d;box-shadow:0 0 0 1px rgba(130,217,197,.12)}
+.live-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.live-title{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--teal);flex-shrink:0}.live-dot.pulse{animation:livePulse 1.8s ease-in-out infinite}.live-dot.warn{background:var(--gold)}.live-dot.idle{background:#647573}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(130,217,197,.65)}60%{box-shadow:0 0 0 6px rgba(130,217,197,0)}}
+.live-state{font-size:12px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);white-space:nowrap}.live-panel[data-state=warn] .live-state{color:var(--gold)}.live-panel[data-state=idle] .live-state{color:var(--muted)}
+.live-brief{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.live-controls{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.live-age{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}.live-btn{font-size:12px;padding:4px 9px;border-radius:6px;background:#12211f;line-height:1.3}
+.live-body{margin-top:12px}.live-hero{border:1px solid var(--line);background:#12211f;border-radius:10px;padding:12px 14px}
+.live-hero-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.live-target{font-family:Georgia,serif;font-size:22px;color:var(--ink);line-height:1.2;min-width:0;overflow-wrap:anywhere}
+.live-timer{font-size:12px;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap;flex-shrink:0}.live-activity{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.35}
+.live-pills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.live-pill{background:#172625;border:1px solid var(--line);border-radius:8px;padding:7px 8px;text-align:center}
+.live-pill strong{display:block;font:19px Georgia,serif;color:var(--teal);font-variant-numeric:tabular-nums;line-height:1.15}.live-pill.rivals strong{color:var(--gold)}.live-pill.left strong{color:var(--ink)}.live-pill span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.live-warn{margin-top:10px;padding:8px 10px;border-radius:8px;border:1px solid rgba(244,189,112,.38);background:rgba(244,189,112,.1);color:var(--gold);font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.live-feed{margin-top:10px}.live-ev{display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.35}.live-ev:last-child{border-bottom:0}
+.live-time{font:11px ui-monospace,Consolas,monospace;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+.live-tag{font-size:10px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;flex-shrink:0;background:#223836;color:var(--teal)}
+.live-tag.rival,.live-tag.dead{background:rgba(240,152,122,.16);color:#f0987a}.live-tag.drop{background:rgba(244,189,112,.16);color:var(--gold)}.live-tag.warn,.live-tag.skip{background:rgba(244,189,112,.18);color:var(--gold)}.live-tag.wave,.live-tag.info{background:#1f3231;color:var(--muted)}
+.live-ev-text{min-width:0;flex:1 1 auto;overflow-wrap:anywhere}.live-ev-text b{color:var(--ink);font-weight:600}.live-ev-detail{color:var(--muted);font-size:12px;margin-left:5px}
+.live-more{margin-top:8px;width:100%;font-size:12px;padding:7px 10px;background:#12211f}
+.live-raw{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}.live-raw>summary{font-size:12px;color:var(--muted)}.live-raw pre{margin:8px 0 0;padding:10px;border-radius:8px;background:#0e1718;border:1px solid var(--line);color:#b7c5c2;font:11px/1.45 ui-monospace,Consolas,monospace;max-height:210px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+@media(max-width:590px){.live-panel{padding:12px 14px}.live-hero{padding:10px 12px}.live-target{font-size:19px}.live-ev{gap:6px;font-size:12.5px}.live-ev-detail{display:block;margin-left:0;font-size:11.5px;margin-top:1px}}
 </style>
 <main><header><p class="eyebrow">Ragnarok M · AkaZaa</p><h1>MVP Hunter</h1><p class="muted" id="status" role="status">Loading hunt history…</p></header>
 <section id="dashboard" hidden>
 <nav class="tabs" aria-label="Dashboard views"><button id="huntTab" aria-pressed="true">Hunt</button><button id="lootTab" aria-pressed="false">Loot</button></nav>
 <div id="huntView">
+<section id="livePanel" class="panel live-panel" aria-label="Live hunt status" hidden>
+<div class="live-head">
+<div class="live-title"><span id="liveDot" class="live-dot idle" aria-hidden="true"></span><span id="liveState" class="live-state">Idle</span><span id="liveBrief" class="live-brief"></span></div>
+<div class="live-controls"><span id="liveAge" class="live-age"></span><button type="button" id="liveRefresh" class="live-btn" aria-label="Refresh live status" title="Refresh live status">↻</button><button type="button" id="liveToggle" class="live-btn" aria-expanded="false">Details</button></div>
+</div>
+<div id="liveBody" class="live-body" hidden>
+<div class="live-hero">
+<div class="live-hero-top"><strong id="liveTarget" class="live-target">Waiting</strong><span id="liveTimer" class="live-timer"></span></div>
+<div id="liveActivity" class="live-activity"></div>
+<div class="live-pills">
+<div class="live-pill"><strong id="liveOurs">0</strong><span>Killed</span></div>
+<div class="live-pill rivals"><strong id="liveRivals">0</strong><span>Rivals</span></div>
+<div class="live-pill left"><strong id="liveLeft">—</strong><span>Left</span></div>
+</div>
+</div>
+<div id="liveWarn" class="live-warn" hidden></div>
+<div id="liveFeed" class="live-feed"></div>
+<button type="button" id="liveMore" class="live-more" hidden></button>
+<details class="live-raw"><summary>Raw log (last 20 lines)</summary><pre id="liveRaw"></pre></details>
+</div>
+</section>
 <section class="panel wave-summary" aria-labelledby="waveHeading">
 <div class="toolbar"><div><p class="eyebrow" id="waveLabel">Latest completed wave</p><h2 id="waveHeading">Wave summary</h2><small id="waveTitle"></small></div><select id="wave" aria-label="Select a wave"></select></div>
 <div class="stats" id="stats"></div><div class="grid wave-details">
@@ -668,5 +710,174 @@ async function refresh(){
 }
 byId('wave').addEventListener('change',waveView);byId('filter').addEventListener('change',historyView);
 byId('day').addEventListener('change',periodView);
+const liveApiUrl = 'https://api.github.com/repos/eddychang23-hub/mvp-hunter-dashboard/contents/live.json?ref=live';
+let liveData = null;
+let livePollTimer = null;
+let liveExpanded = null;
+let liveShowAll = false;
+let prevLiveState = null;
+const liveTagLabels = {kill:'Kill',rival:'Rival',dead:'Dead',skip:'Skip',drop:'Drop',warn:'Warn',wave:'Wave',info:'Info'};
+function decodeBase64Utf8(b64){
+  const bin=atob(String(b64||'').replace(/\s+/g,''));
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+function fmtAge(ms){
+  const s=Math.max(0,Math.round((Date.now()-ms)/1000));
+  if(s<5)return 'just now';
+  if(s<60)return s+'s ago';
+  const m=Math.floor(s/60);
+  if(m<60)return m+'m ago';
+  const h=Math.floor(m/60), rm=m%60;
+  return h+'h'+(rm?' '+rm+'m':'')+' ago';
+}
+function fmtSpan(sec){
+  const s=Math.max(0,Math.round(sec));
+  if(s<60)return s+'s';
+  const m=Math.floor(s/60), rs=s%60;
+  if(m<60)return m+'m'+(rs?' '+rs+'s':'');
+  const h=Math.floor(m/60), rm=m%60;
+  return h+'h'+(rm?' '+rm+'m':'');
+}
+function updateLiveClocks(){
+  if(!liveData)return;
+  const upd=parseSourceTime(liveData.updatedAt);
+  const ageMs=upd?Date.now()-upd.getTime():0;
+  const active=['hunting','pre_spawn','recovering'].includes(liveData.state);
+  const stale=active&&ageMs>5*60*1000;
+  byId('liveAge').textContent=upd?(stale?'Stale · ':'')+fmtAge(upd.getTime()):'';
+  const timerEl=byId('liveTimer');
+  if(liveData.state==='hunting'&&liveData.waveStartedAt){
+    const st=parseSourceTime(liveData.waveStartedAt);
+    timerEl.textContent=st?'Elapsed '+fmtSpan((Date.now()-st.getTime())/1000):'';
+  }else if((liveData.state==='idle'||liveData.state==='pre_spawn'||liveData.state==='between_waves')&&liveData.nextSpawnAt){
+    const nx=parseSourceTime(liveData.nextSpawnAt);
+    if(nx){
+      const diff=(nx.getTime()-Date.now())/1000;
+      timerEl.textContent=diff>0?'Spawn in '+fmtSpan(diff):'Spawn due';
+    }else timerEl.textContent='';
+  }else{
+    timerEl.textContent='';
+  }
+}
+function renderLive(){
+  const panel=byId('livePanel');
+  if(!liveData){panel.hidden=true;return}
+  panel.hidden=false;
+  const st=liveData.state||'idle';
+  const active=['hunting','pre_spawn','recovering'].includes(st);
+  const warn=['paused','recovering'].includes(st);
+  panel.dataset.active=String(active);
+  panel.dataset.state=warn?'warn':(active?'active':'idle');
+  const dot=byId('liveDot');
+  dot.className='live-dot '+(warn?'warn':(active?'pulse':'idle'));
+  const labels={hunting:'Hunting',pre_spawn:'Pre-spawn',paused:'Paused',recovering:'Recovering',between_waves:'Between waves',idle:'Idle',stopped:'Offline'};
+  const waveTag=liveData.wave?' · '+liveData.wave:'';
+  byId('liveState').textContent=(labels[st]||'Idle')+(active||st==='paused'?waveTag:'');
+  const briefParts=[];
+  if(active&&liveData.target)briefParts.push(liveData.target);
+  else if(liveData.activity)briefParts.push(liveData.activity);
+  byId('liveBrief').textContent=briefParts.join(' · ');
+  const shouldOpen=liveExpanded!==null?liveExpanded:(active||warn);
+  byId('liveBody').hidden=!shouldOpen;
+  byId('liveToggle').setAttribute('aria-expanded',String(shouldOpen));
+  byId('liveToggle').textContent=shouldOpen?'Hide':'Details';
+  const targetTitle=liveData.target||(st==='idle'?(liveData.wave?'Next wave · '+liveData.wave:'Idle'):(labels[st]||'Hunter'));
+  byId('liveTarget').textContent=targetTitle;
+  const actBits=[];
+  if(liveData.map)actBits.push(liveData.map);
+  if(liveData.activity)actBits.push(liveData.activity);
+  byId('liveActivity').textContent=actBits.join(' · ');
+  const c=liveData.counts||{};
+  byId('liveOurs').textContent=number(c.ours||0);
+  byId('liveRivals').textContent=number(c.rivals||0);
+  byId('liveLeft').textContent=c.remaining===null||c.remaining===undefined?'—':number(c.remaining);
+  const warnBox=byId('liveWarn');
+  if(liveData.lastWarning){warnBox.textContent='⚠ '+liveData.lastWarning;warnBox.hidden=false}
+  else warnBox.hidden=true;
+  const events=Array.isArray(liveData.events)?liveData.events:[];
+  const limit=liveShowAll?events.length:8;
+  const feed=byId('liveFeed');
+  if(!events.length){
+    feed.replaceChildren(make('p','No recent hunt events yet.','muted'));
+  }else{
+    const frag=document.createDocumentFragment();
+    for(const ev of events.slice(0,limit)){
+      const rowEl=make('div','','live-ev');
+      rowEl.append(make('span',ev.t||'','live-time'));
+      const kind=ev.kind||'info';
+      rowEl.append(make('span',liveTagLabels[kind]||kind,'live-tag '+kind));
+      const txt=make('span','','live-ev-text');
+      txt.append(make('b',ev.title||''));
+      if(ev.detail)txt.append(make('span',ev.detail,'live-ev-detail'));
+      rowEl.append(txt);
+      frag.append(rowEl);
+    }
+    feed.replaceChildren(frag);
+  }
+  const moreBtn=byId('liveMore');
+  if(events.length>8){
+    moreBtn.hidden=false;
+    moreBtn.textContent=liveShowAll?'Show fewer':'Show all ('+events.length+')';
+  }else{
+    moreBtn.hidden=true;
+  }
+  const rawLines=Array.isArray(liveData.rawTail)?liveData.rawTail:[];
+  byId('liveRaw').textContent=rawLines.length?rawLines.join('\n'):'No raw log lines available.';
+  updateLiveClocks();
+}
+async function fetchLive(){
+  if(location.protocol==='file:')return;
+  try{
+    let next=null;
+    if(hostedStatic()){
+      const res=await fetch(liveApiUrl,{cache:'no-cache'});
+      if(!res.ok)return;
+      const body=await res.json();
+      if(body&&body.content)next=JSON.parse(decodeBase64Utf8(body.content));
+    }else if(!offline){
+      const res=await fetch('/api/live',{cache:'no-store'});
+      if(!res.ok)return;
+      next=await res.json();
+    }
+    if(!next||typeof next!=='object')return;
+    const wasActive=['hunting','pre_spawn'].includes(prevLiveState);
+    const nowIdle=next.state==='idle';
+    if(wasActive&&nowIdle)setTimeout(refresh,45000);
+    if(prevLiveState!==next.state&&['hunting','pre_spawn'].includes(next.state))liveExpanded=null;
+    prevLiveState=next.state;
+    liveData=next;
+    renderLive();
+  }catch{}
+}
+function scheduleLivePoll(){
+  clearTimeout(livePollTimer);
+  const active=liveData&&['hunting','pre_spawn','recovering'].includes(liveData.state);
+  const delay=active?12000:60000;
+  livePollTimer=setTimeout(async()=>{
+    if(!document.hidden)await fetchLive();
+    scheduleLivePoll();
+  },delay);
+}
+byId('liveToggle').addEventListener('click',()=>{
+  const open=byId('liveBody').hidden;
+  liveExpanded=open;
+  renderLive();
+});
+byId('liveRefresh').addEventListener('click',async()=>{
+  byId('liveAge').textContent='Refreshing…';
+  await fetchLive();
+  scheduleLivePoll();
+});
+byId('liveMore').addEventListener('click',()=>{
+  liveShowAll=!liveShowAll;
+  renderLive();
+});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden){fetchLive().then(scheduleLivePoll)}
+});
+setInterval(()=>{if(!document.hidden&&liveData)updateLiveClocks()},1000);
+fetchLive().then(scheduleLivePoll);
 refresh();setInterval(refresh,60000);
 </script></html>
