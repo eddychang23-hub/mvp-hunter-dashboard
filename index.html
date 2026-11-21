@@ -36,6 +36,7 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 .live-state{font-size:12px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);white-space:nowrap}.live-panel[data-state=warn] .live-state{color:var(--gold)}.live-panel[data-state=idle] .live-state{color:var(--muted)}
 .live-brief{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.live-controls{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .live-age{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}.live-btn{font-size:12px;padding:4px 9px;border-radius:6px;background:#12211f;line-height:1.3}
+.live-void{font-size:10px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted);background:#12211f;white-space:nowrap}.live-void[data-on=true]{border-color:#3f766d;color:var(--teal);background:rgba(130,217,197,.12)}
 .live-body{margin-top:12px}.live-hero{border:1px solid var(--line);background:#12211f;border-radius:10px;padding:12px 14px}
 .live-hero-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.live-target{font-family:Georgia,serif;font-size:22px;color:var(--ink);line-height:1.2;min-width:0;overflow-wrap:anywhere}
 .live-timer{font-size:12px;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap;flex-shrink:0}.live-activity{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.35}
@@ -57,7 +58,7 @@ details.zeny-group{margin:0;border-bottom:1px solid var(--line)}details.zeny-gro
 <div id="huntView">
 <section id="livePanel" class="panel live-panel" aria-label="Live hunt status" hidden>
 <div class="live-head">
-<div class="live-title"><span id="liveDot" class="live-dot idle" aria-hidden="true"></span><span id="liveState" class="live-state">Idle</span><span id="liveBrief" class="live-brief"></span></div>
+<div class="live-title"><span id="liveDot" class="live-dot idle" aria-hidden="true"></span><span id="liveState" class="live-state">Idle</span><span id="liveVoid" class="live-void" hidden></span><span id="liveBrief" class="live-brief"></span></div>
 <div class="live-controls"><span id="liveAge" class="live-age"></span><button type="button" id="liveRefresh" class="live-btn" aria-label="Refresh live status" title="Refresh live status">↻</button><button type="button" id="liveToggle" class="live-btn" aria-expanded="false">Details</button></div>
 </div>
 <div id="liveBody" class="live-body" hidden>
@@ -777,6 +778,12 @@ function renderLive(){
   const labels={hunting:'Hunting',pre_spawn:'Pre-spawn',paused:'Paused',recovering:'Recovering',between_waves:'Between waves',idle:'Idle',stopped:'Offline'};
   const waveTag=liveData.wave?' · '+liveData.wave:'';
   byId('liveState').textContent=(labels[st]||'Idle')+(active||st==='paused'?waveTag:'');
+  const voidBadge=byId('liveVoid');
+  if(typeof liveData.voidEnabled==='boolean'){
+    voidBadge.textContent=liveData.voidEnabled?'Void ON':'Void OFF';
+    voidBadge.dataset.on=String(liveData.voidEnabled);
+    voidBadge.hidden=false;
+  }else voidBadge.hidden=true;
   const briefParts=[];
   if(active&&liveData.target)briefParts.push(liveData.target);
   else if(liveData.activity)briefParts.push(liveData.activity);
