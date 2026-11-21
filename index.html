@@ -837,7 +837,7 @@ function renderLive(){
     moreBtn.hidden=true;
   }
   const rawLines=Array.isArray(liveData.rawTail)?liveData.rawTail:[];
-  byId('liveRaw').textContent=rawLines.length?rawLines.join('\n'):'No raw log lines available.';
+  byId('liveRaw').textContent=rawLines.length?[...rawLines].reverse().join('\n'):'No raw log lines available.';
   updateLiveClocks();
 }
 function applyLiveSnapshot(next){
