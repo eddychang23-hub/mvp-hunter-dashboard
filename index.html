@@ -710,9 +710,11 @@ async function refresh(){
 }
 byId('wave').addEventListener('change',waveView);byId('filter').addEventListener('change',historyView);
 byId('day').addEventListener('change',periodView);
+const liveFirebaseUrl = 'https://mvp-hunter-live-default-rtdb.firebaseio.com/live.json';
 const liveApiUrl = 'https://api.github.com/repos/eddychang23-hub/mvp-hunter-dashboard/contents/live.json?ref=live';
 let liveData = null;
 let livePollTimer = null;
+let liveStream = null;
 let liveExpanded = null;
 let liveShowAll = false;
 let prevLiveState = null;
@@ -827,36 +829,83 @@ function renderLive(){
   byId('liveRaw').textContent=rawLines.length?rawLines.join('\n'):'No raw log lines available.';
   updateLiveClocks();
 }
+function applyLiveSnapshot(next){
+  if(!next||typeof next!=='object')return;
+  const wasActive=['hunting','pre_spawn'].includes(prevLiveState);
+  const nowIdle=next.state==='idle';
+  if(wasActive&&nowIdle)setTimeout(refresh,45000);
+  if(prevLiveState!==next.state&&['hunting','pre_spawn'].includes(next.state))liveExpanded=null;
+  prevLiveState=next.state;
+  liveData=next;
+  renderLive();
+}
+function stopLiveStream(){
+  if(liveStream){liveStream.close();liveStream=null}
+}
+function startLiveStream(){
+  if(!hostedStatic()||!liveFirebaseUrl||typeof EventSource==='undefined'||document.hidden)return false;
+  if(liveStream&&liveStream.readyState!==EventSource.CLOSED)return true;
+  stopLiveStream();
+  try{
+    const es=new EventSource(liveFirebaseUrl);
+    liveStream=es;
+    es.addEventListener('put',e=>{
+      try{
+        const msg=JSON.parse(e.data);
+        if(msg&&msg.path==='/'&&msg.data&&typeof msg.data==='object')applyLiveSnapshot(msg.data);
+      }catch{}
+    });
+    es.addEventListener('cancel',()=>{stopLiveStream();scheduleLivePoll()});
+    es.addEventListener('auth_revoked',()=>{stopLiveStream();scheduleLivePoll()});
+    es.onerror=()=>{
+      if(es.readyState===EventSource.CLOSED){
+        if(liveStream===es)liveStream=null;
+        scheduleLivePoll();
+      }
+    };
+    return true;
+  }catch{
+    stopLiveStream();
+    return false;
+  }
+}
 async function fetchLive(){
   if(location.protocol==='file:')return;
   try{
     let next=null;
     if(hostedStatic()){
-      const res=await fetch(liveApiUrl,{cache:'no-cache'});
-      if(!res.ok)return;
-      const body=await res.json();
-      if(body&&body.content)next=JSON.parse(decodeBase64Utf8(body.content));
+      if(liveFirebaseUrl){
+        try{
+          const fb=await fetch(liveFirebaseUrl,{cache:'no-store'});
+          if(fb.ok){
+            const data=await fb.json();
+            if(data&&typeof data==='object')next=data;
+          }
+        }catch{}
+      }
+      if(!next){
+        const res=await fetch(liveApiUrl,{cache:'no-cache'});
+        if(!res.ok)return;
+        const body=await res.json();
+        if(body&&body.content)next=JSON.parse(decodeBase64Utf8(body.content));
+      }
     }else if(!offline){
       const res=await fetch('/api/live',{cache:'no-store'});
       if(!res.ok)return;
       next=await res.json();
     }
-    if(!next||typeof next!=='object')return;
-    const wasActive=['hunting','pre_spawn'].includes(prevLiveState);
-    const nowIdle=next.state==='idle';
-    if(wasActive&&nowIdle)setTimeout(refresh,45000);
-    if(prevLiveState!==next.state&&['hunting','pre_spawn'].includes(next.state))liveExpanded=null;
-    prevLiveState=next.state;
-    liveData=next;
-    renderLive();
+    applyLiveSnapshot(next);
   }catch{}
 }
 function scheduleLivePoll(){
   clearTimeout(livePollTimer);
+  if(hostedStatic()&&liveStream&&liveStream.readyState===EventSource.OPEN)return;
   const active=liveData&&['hunting','pre_spawn','recovering'].includes(liveData.state);
   const delay=active?12000:60000;
   livePollTimer=setTimeout(async()=>{
-    if(!document.hidden)await fetchLive();
+    if(!document.hidden){
+      if(!startLiveStream())await fetchLive();
+    }
     scheduleLivePoll();
   },delay);
 }
@@ -868,6 +917,7 @@ byId('liveToggle').addEventListener('click',()=>{
 byId('liveRefresh').addEventListener('click',async()=>{
   byId('liveAge').textContent='Refreshing…';
   await fetchLive();
+  startLiveStream();
   scheduleLivePoll();
 });
 byId('liveMore').addEventListener('click',()=>{
@@ -875,9 +925,14 @@ byId('liveMore').addEventListener('click',()=>{
   renderLive();
 });
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden){fetchLive().then(scheduleLivePoll)}
+  if(document.hidden){
+    stopLiveStream();
+    clearTimeout(livePollTimer);
+  }else{
+    fetchLive().then(()=>{startLiveStream();scheduleLivePoll()});
+  }
 });
 setInterval(()=>{if(!document.hidden&&liveData)updateLiveClocks()},1000);
-fetchLive().then(scheduleLivePoll);
+fetchLive().then(()=>{startLiveStream();scheduleLivePoll()});
 refresh();setInterval(refresh,60000);
 </script></html>
